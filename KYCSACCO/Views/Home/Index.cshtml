@@ -1,0 +1,158 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">📊 Dashboard Overview</h2>
+
+    <!-- KPI CARDS -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-2">
+            <div class="card text-white bg-primary shadow-sm">
+                <div class="card-body">
+                    <h6>Companies</h6>
+                    <h3>@ViewBag.TotalCompanies</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-white bg-success shadow-sm">
+                <div class="card-body">
+                    <h6>Members</h6>
+                    <h3>@ViewBag.TotalMembers</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-white bg-info shadow-sm">
+                <div class="card-body">
+                    <h6>Savings</h6>
+                    <h3>@ViewBag.TotalSavings.ToString("N0")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-white bg-warning shadow-sm">
+                <div class="card-body">
+                    <h6>Loans</h6>
+                    <h3>@ViewBag.TotalLoans.ToString("N0")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-white bg-secondary shadow-sm">
+                <div class="card-body">
+                    <h6>Active Users</h6>
+                    <h3>@ViewBag.ActiveUsers</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-white bg-danger shadow-sm">
+                <div class="card-body">
+                    <h6>Pending</h6>
+                    <h3>@ViewBag.PendingApprovals</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIE + LINE -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">Company Distribution by Sector</div>
+                <div class="card-body">
+                    <canvas id="pieChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">Monthly New Members</div>
+                <div class="card-body">
+                    <canvas id="lineChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- PIE ----------
+    new Chart(document.getElementById('pieChart'), {
+        type: 'pie',
+        data: {
+            labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.PieLabels)),
+            datasets: [{
+                data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.PieData)),
+                backgroundColor: ['#0d6efd','#198754','#ffc107','#dc3545','#6f42c1']
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // ---------- LINE ----------
+    new Chart(document.getElementById('lineChart'), {
+        type: 'line',
+        data: {
+            labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.LineLabels)),
+            datasets: [{
+                label: 'New Members',
+                data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.LineData)),
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13,110,253,0.15)',
+                fill: true,
+                tension: 0.35,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: true } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // ---------- BAR ----------
+    new Chart(document.getElementById('barChart'), {
+        type: 'bar',
+        data: {
+            labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.BarLabels)),
+            datasets: [
+                {
+                    label: 'Disbursed',
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.BarDisbursed)),
+                    backgroundColor: '#0d6efd'
+                },
+                {
+                    label: 'Repaid',
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.BarRepaid)),
+                    backgroundColor: '#198754'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top' } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // ---------- DOUGHNUT ----------
+    new Chart(document.getElementById('doughnutChart'), {
+        type: 'doughnut',
+        data: {
+            labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.RoleLabels)),
+            datasets: [{
+                data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.RoleData)),
+                backgroundColor: ['#dc3545','#fd7e14','#0dcaf0','#6f42c1','#20c997']
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+</script>

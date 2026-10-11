@@ -1,0 +1,47 @@
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+[Ll]og/
+[Ll]ogs/
+
+## Rider / VS Code
+.idea/
+.vscode/
+
+## NuGet
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## ASP.NET / .NET Core
+*.dll
+*.pdb
+*.cache
+*.log
+secrets.json
+appsettings.Development.json
+appsettings.Production.json
+
+## OS files
+.DS_Store
+Thumbs.db
+
+## Test results
+[Tt]est[Rr]esult*/
+*.trx
