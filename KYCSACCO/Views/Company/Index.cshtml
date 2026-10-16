@@ -56,7 +56,7 @@
                         <label for="CompanyCode" class="form-label fw-bold">Company Code *</label>
                         <input type="text" class="form-control bg-light" id="CompanyCode" name="CompanyCode"
                                value="@newCompanyCode" required maxlength="50" readonly />
-                        <small class="text-muted">Auto-generated unique code (not editable)</small>
+                        <small class="text-muted">Auto-generated with <strong>KYC</strong> prefix (not editable)</small>
                     </div>
 
                     <div class="col-md-4 mb-3">
@@ -165,9 +165,9 @@
             <div class="row align-items-center">
                 <div class="col-md-4">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-list-check me-2"></i>Companies List
+                        <i class="bi bi-list-check me-2"></i>KYC Companies List
                     </h5>
-                    <small class="text-muted">Manage your companies</small>
+                    <small class="text-muted">All KYC-registered companies</small>
                 </div>
                 <div class="col-md-4 offset-md-4">
                     <form asp-action="Index" method="get" class="d-flex gap-2" id="searchForm">
@@ -176,7 +176,7 @@
                             <button type="submit" class="btn btn-outline-secondary">
                                 <i class="bi bi-search"></i>
                             </button>
-                            @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch))
+                            @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch as string))
                             {
                                 <a asp-action="Index" class="btn btn-outline-danger">
                                     <i class="bi bi-x-lg"></i> Clear
@@ -192,8 +192,8 @@
             {
                 <div class="alert alert-info text-center py-5">
                     <i class="bi bi-info-circle fs-1"></i>
-                    <h5 class="mt-3">No companies found</h5>
-                    <p class="mb-0">Use the form above to create your first company.</p>
+                    <h5 class="mt-3">No KYC companies found</h5>
+                    <p class="mb-0">Use the form above to create your first KYC company.</p>
                 </div>
             }
             else
@@ -243,7 +243,7 @@
                     </table>
                 </div>
                 <div class="mt-3 text-muted">
-                    <small>Total: @Model.Count() company(s)</small>
+                    <small>Total: @Model.Count() KYC company(s)</small>
                 </div>
             }
         </div>
@@ -545,11 +545,9 @@
                             subCountySelect.append('<option value="' + sc.value + '">' + sc.text + '</option>');
                         });
 
-                        // Set the selected value if provided
                         if (selectedId) {
                             console.log('Setting SubCounty to:', selectedId);
                             subCountySelect.val(selectedId);
-                            // Trigger change to load wards
                             subCountySelect.trigger('change');
                         }
                     } else {
@@ -586,7 +584,6 @@
                             wardSelect.append('<option value="' + ward.value + '">' + ward.text + '</option>');
                         });
 
-                        // Set the selected value if provided
                         if (selectedId) {
                             console.log('Setting Ward to:', selectedId);
                             wardSelect.val(selectedId);
@@ -664,13 +661,6 @@
                     if (response.success) {
                         var company = response.company;
 
-                        console.log('Company data received:', company);
-                        console.log('CSRegNO value:', company.CSRegNO);
-                        console.log('CountyId:', company.countyId);
-                        console.log('SubCountyId:', company.subCountyId);
-                        console.log('WardId:', company.wardId);
-
-                        // Populate basic form fields
                         $('#companyId').val(company.id);
                         $('#CompanyCode').val(company.companyCode);
                         $('#CSRegNO').val(company.CSRegNO || '');
@@ -686,32 +676,19 @@
                             $('#BusinessStatus').val(company.businessStatus);
                         }
 
-                        // Reset dropdowns first
                         $('#SubCounty').empty().append('<option value="">-- Select Sub County --</option>');
                         $('#Ward').empty().append('<option value="">-- Select Ward --</option>');
 
-                        // Set County and load Sub Counties
                         if (company.countyId) {
                             console.log('Setting County to:', company.countyId);
                             $('#County').val(company.countyId);
-
-                            // Load sub counties and set the selected value
                             loadSubCounties(company.countyId, company.subCountyId);
-                        } else {
-                            console.warn('No countyId provided for company');
                         }
 
-                        // Update form title and button
                         $('#formTitle').html('<i class="bi bi-pencil-square me-2"></i>Edit Company - ' + company.companyName);
                         $('#submitBtn').html('<i class="bi bi-save me-2"></i>Update Company');
 
                         $('#companyFormCard')[0].scrollIntoView({ behavior: 'smooth' });
-
-                        console.log('Form populated:');
-                        console.log('CSRegNO:', $('#CSRegNO').val());
-                        console.log('County:', $('#County').val());
-                        console.log('SubCounty:', $('#SubCounty').val());
-                        console.log('Ward:', $('#Ward').val());
 
                         showToast('success', 'Company loaded for editing');
                     } else {

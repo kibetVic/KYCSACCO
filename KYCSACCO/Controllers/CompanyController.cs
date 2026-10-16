@@ -1,15 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using KYCSACCO.Data;
-using KYCSACCO.Models;
 using KYCSACCO.Models.DTOs;
 using KYCSACCO.Services;
-using System;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace KYCSACCO.Controllers
 {
@@ -69,42 +64,19 @@ namespace KYCSACCO.Controllers
         [Authorize]
         public async Task<IActionResult> Index(string search = null)
         {
-            var currentUserRole = User.FindFirstValue(ClaimTypes.Role);
-            var currentUserCompanyCode = User.FindFirstValue("CompanyCode");
+            // ============================================================
+            // Show ALL KYC companies to every authenticated user.
+            // No per-user filtering by CompanyCode.
+            // ============================================================
+            var companies = await _companyService.GetAllCompaniesAsync(search);
 
-            List<CompanyResponseDTO> companies;
-
-            if (currentUserRole == "Super Admin")
-            {
-                companies = await _companyService.GetAllCompaniesAsync(search);
-            }
-            else
-            {
-                var userCompany = await _companyService.GetCompanyByCodeAsync(currentUserCompanyCode);
-                companies = userCompany != null ? new List<CompanyResponseDTO> { userCompany } : new List<CompanyResponseDTO>();
-
-                if (!string.IsNullOrEmpty(search) && companies.Any())
-                {
-                    companies = companies.Where(c =>
-                        (c.CompanyName?.Contains(search, StringComparison.OrdinalIgnoreCase) == true) ||
-                        (c.CompanyCode?.Contains(search, StringComparison.OrdinalIgnoreCase) == true)
-                    ).ToList();
-                }
-            }
-
-            if (currentUserRole == "Super Admin")
-            {
-                var newCompanyCode = await _companyService.GenerateCompanyCodeAsync();
-                ViewBag.NewCompanyCode = newCompanyCode;
-            }
-            else
-            {
-                ViewBag.NewCompanyCode = null;
-            }
+            // Generate a new KYC-prefixed code for the create form
+            var newCompanyCode = await _companyService.GenerateCompanyCodeAsync();
+            ViewBag.NewCompanyCode = newCompanyCode;
 
             ViewBag.CurrentSearch = search;
-            ViewBag.CurrentUserRole = currentUserRole;
-            ViewBag.CurrentUserCompany = currentUserCompanyCode;
+            ViewBag.CurrentUserRole = User.FindFirstValue(ClaimTypes.Role);
+            ViewBag.CurrentUserCompany = User.FindFirstValue("CompanyCode");
 
             await LoadDropdowns();
 

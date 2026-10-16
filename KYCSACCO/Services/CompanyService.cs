@@ -20,6 +20,8 @@ namespace KYCSACCO.Services
 
     public class CompanyService : ICompanyService
     {
+        private const string KycPrefix = "KYC";
+
         private readonly ApplicationDbContext _context;
         private readonly IBlockchainService _blockchainService;
         private readonly ILogger<CompanyService> _logger;
@@ -42,7 +44,7 @@ namespace KYCSACCO.Services
             try
             {
                 return await _context.Companies
-                    .Where(c => c.Project == true)
+                    .Where(c => c.CompanyCode.StartsWith(KycPrefix))
                     .OrderBy(c => c.CompanyName)
                     .Select(c => new
                     {
@@ -68,13 +70,23 @@ namespace KYCSACCO.Services
 
                 var currentUser = _companyContextService.GetCurrentUserName() ?? "SYSTEM";
 
-                // Check if company code already exists
-                if (!await IsCompanyCodeUniqueAsync(companyDto.CompanyCode))
+                // Ensure the incoming code starts with KYC. If empty, generate one.
+                if (string.IsNullOrWhiteSpace(companyDto.CompanyCode))
                 {
-                    throw new InvalidOperationException($"Company code {companyDto.CompanyCode} already exists.");
+                    companyDto.CompanyCode = await GenerateCompanyCodeAsync();
+                }
+                else if (!companyDto.CompanyCode.StartsWith(KycPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(
+                        $"Company Code must start with '{KycPrefix}'.");
                 }
 
-                // Get location names if IDs are provided
+                if (!await IsCompanyCodeUniqueAsync(companyDto.CompanyCode))
+                {
+                    throw new InvalidOperationException(
+                        $"Company code {companyDto.CompanyCode} already exists.");
+                }
+
                 string countyName = null;
                 string subCountyName = null;
                 string wardName = null;
@@ -109,7 +121,6 @@ namespace KYCSACCO.Services
                 _context.Companies.Add(company);
                 await _context.SaveChangesAsync();
 
-                // Create blockchain transaction
                 string blockchainTxId = null;
                 try
                 {
@@ -184,7 +195,6 @@ namespace KYCSACCO.Services
 
                 var currentUser = _companyContextService.GetCurrentUserName() ?? "SYSTEM";
 
-                // Store old values for blockchain record
                 var oldValues = new
                 {
                     company.CompanyCode,
@@ -197,8 +207,7 @@ namespace KYCSACCO.Services
                     company.CSRegNO
                 };
 
-                // Update company details (CompanyCode is NOT updated - it's read-only)
-                // company.CompanyCode = companyDto.CompanyCode; // DO NOT UPDATE THIS
+                // CompanyCode is NOT updated - it's read-only
                 company.CompanyName = companyDto.CompanyName;
                 company.Contactperson = companyDto.Contactperson;
                 company.Telephone = companyDto.Telephone;
@@ -224,7 +233,6 @@ namespace KYCSACCO.Services
 
                 await _context.SaveChangesAsync();
 
-                // Create blockchain transaction
                 string blockchainTxId = null;
                 try
                 {
@@ -333,7 +341,6 @@ namespace KYCSACCO.Services
 
                 var currentUser = _companyContextService.GetCurrentUserName() ?? "SYSTEM";
 
-                // Store company details for blockchain record
                 var companyDetails = new
                 {
                     company.Id,
@@ -349,7 +356,6 @@ namespace KYCSACCO.Services
                 _context.Companies.Remove(company);
                 await _context.SaveChangesAsync();
 
-                // Create blockchain transaction
                 try
                 {
                     var blockchainData = new
@@ -391,7 +397,7 @@ namespace KYCSACCO.Services
         public async Task<CompanyResponseDTO> GetCompanyByIdAsync(int id)
         {
             var company = await _context.Companies
-                .FirstOrDefaultAsync(c => c.Id == id); 
+                .FirstOrDefaultAsync(c => c.Id == id);
 
             if (company == null) return null;
 
@@ -411,9 +417,14 @@ namespace KYCSACCO.Services
             return MapToResponseDTO(company, company.BlockchainTxId);
         }
 
+        // ============================================================
+        // Returns all companies whose code starts with KYC.
+        // Not filtered by the logged-in user's company.
+        // ============================================================
         public async Task<List<CompanyResponseDTO>> GetAllCompaniesAsync(string search = null)
         {
-            var query = _context.Companies.AsQueryable();
+            var query = _context.Companies
+                .Where(c => c.CompanyCode.StartsWith(KycPrefix));
 
             if (!string.IsNullOrEmpty(search))
             {
@@ -432,27 +443,45 @@ namespace KYCSACCO.Services
             return companies.Select(c => MapToResponseDTO(c, c.BlockchainTxId)).ToList();
         }
 
+        // ============================================================
+        // Generate a new company code with the KYC prefix.
+        // Format: KYCyyyyMMdd-NNN  e.g. KYC20261016-001
+        // ============================================================
         public async Task<string> GenerateCompanyCodeAsync()
         {
-            var prefix = "SACCO";
+            const string prefix = KycPrefix;                       // "KYC"
             var date = DateTime.Now.ToString("yyyyMMdd");
+
+            // Base looks like: KYCSACCO20261016
+            var basePrefix = $"{prefix}SACCO{date}";
+
+            // Format of the full code: KYCSACCOyyyyMMdd-NNN  (e.g. KYCSACCO20261016-001)
+            var codePrefixWithDash = $"{basePrefix}-";
+
             var sequence = 1;
 
+            // Look for the highest existing sequence for today
             var lastCompany = await _context.Companies
-                .Where(c => c.CompanyCode.StartsWith($"{prefix}{date}"))
+                .Where(c => c.CompanyCode.StartsWith(codePrefixWithDash))
                 .OrderByDescending(c => c.CompanyCode)
                 .FirstOrDefaultAsync();
 
-            if (lastCompany != null && lastCompany.CompanyCode.Length >= prefix.Length + date.Length + 3)
+            if (lastCompany != null && !string.IsNullOrWhiteSpace(lastCompany.CompanyCode))
             {
-                var sequenceStr = lastCompany.CompanyCode.Substring(lastCompany.CompanyCode.Length - 3);
-                if (int.TryParse(sequenceStr, out int lastSeq))
+                // Safely split on the dash — the last segment is the numeric sequence.
+                var parts = lastCompany.CompanyCode.Split('-');
+                if (parts.Length >= 2)
                 {
-                    sequence = lastSeq + 1;
+                    var sequenceStr = parts[^1];                    // last segment: "001", "010", ...
+                    if (int.TryParse(sequenceStr, out int lastSeq))
+                    {
+                        sequence = lastSeq + 1;
+                    }
                 }
             }
 
-            return $"{prefix}{date}-{sequence:D3}";
+            // Format: KYCSACCO20261016-001 (sequence padded to 3 digits)
+            return $"{codePrefixWithDash}{sequence:D3}";
         }
 
         public async Task<bool> IsCompanyCodeUniqueAsync(string companyCode, int? excludeId = null)

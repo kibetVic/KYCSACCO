@@ -1,0 +1,830 @@
+﻿@model IEnumerable<KYCSACCO.Models.DTOs.GIGsResponseDTO>
+@{
+    ViewData["Title"] = "Common Interest Groups";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var newGigCode = ViewBag.NewGigCode as string;
+    var companies = ViewBag.Companies as List<KYCSACCO.Models.DTOs.CompanyLookupDTO>
+                    ?? new List<KYCSACCO.Models.DTOs.CompanyLookupDTO>();
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-3">
+                        <i class="bi bi-arrow-left"></i> Back to Dashboard
+                    </a>
+                    <h2 class="page-title mb-0">
+                        <i class="bi bi-people me-2"></i>Common Interest Groups (CIGs)
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- GIG Form (Top Section) -->
+    <div class="card shadow-sm mb-4" id="gigFormCard">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0" id="formTitle">
+                <i class="bi bi-plus-circle me-2"></i>Add New GIG
+            </h5>
+        </div>
+        <div class="card-body">
+            <form id="gigForm" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="gigId" name="Id" />
+
+                <div class="row">
+                    <!-- NEW: Company Code dropdown -->
+                    <div class="col-md-4 mb-3">
+                        <label for="CompanyCode" class="form-label fw-bold">Company Code *</label>
+                        <select class="form-select" id="CompanyCode" name="CompanyCode" required>
+                            <option value="">-- Select Company --</option>
+                            @foreach (var c in companies)
+                            {
+                                <option value="@c.Code">@c.Code - @c.Name</option>
+                            }
+                        </select>
+                        <small class="text-muted">Only companies with a KYC code are listed</small>
+                    </div>
+
+                    <!-- GIG Code - Auto-generated, read-only -->
+                    <div class="col-md-4 mb-3">
+                        <label for="GigCode" class="form-label fw-bold">GIG Code *</label>
+                        <input type="text" class="form-control bg-light" id="GigCode" name="GigCode"
+                               value="@newGigCode" required maxlength="50" readonly />
+                        <small class="text-muted">Auto-generated unique code for the selected company</small>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="GigName" class="form-label fw-bold">GIG Name *</label>
+                        <input type="text" class="form-control" id="GigName" name="GigName" required maxlength="200" />
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="Chairperson" class="form-label">Chairperson</label>
+                        <input type="text" class="form-control" id="Chairperson" name="Chairperson" maxlength="100" />
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="ContactPhone" class="form-label">Contact Phone</label>
+                        <input type="tel" class="form-control" id="ContactPhone" name="ContactPhone" maxlength="50" />
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="ContactEmail" class="form-label">Contact Email</label>
+                        <input type="email" class="form-control" id="ContactEmail" name="ContactEmail" maxlength="100" />
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="RegistrationDate" class="form-label">Registration Date</label>
+                        <input type="date" class="form-control" id="RegistrationDate" name="RegistrationDate" />
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="TotalMembers" class="form-label">Total Members</label>
+                        <input type="number" class="form-control" id="TotalMembers" name="TotalMembers" min="0" />
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="Status" class="form-label">Status</label>
+                        <select class="form-select" id="Status" name="Status">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Suspended">Suspended</option>
+                        </select>
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                        <i class="bi bi-eraser me-2"></i>Reset
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="bi bi-save me-2"></i>Save GIG
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- GIGs List (Bottom Section) -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-list-check me-2"></i>GIGs List
+                    </h5>
+                    <small class="text-muted">Manage Common Interest Groups</small>
+                </div>
+                <div class="col-md-4">
+                    <form asp-action="Index" method="get" class="d-flex gap-2" id="searchForm">
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control" placeholder="Search by code, name, chairperson, phone..." value="@ViewBag.CurrentSearch" id="searchInput" />
+                            <button type="submit" class="btn btn-outline-secondary" id="searchBtn">
+                                <i class="bi bi-search"></i>
+                            </button>
+                            @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch as string))
+                            {
+                                <a asp-action="Index" class="btn btn-outline-danger" id="clearSearchBtn">
+                                    <i class="bi bi-x-lg"></i> Clear
+                                </a>
+                            }
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span class="badge bg-primary">Total: @Model.Count() GIG(s)</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info text-center py-5">
+                    <i class="bi bi-info-circle fs-1"></i>
+                    <h5 class="mt-3">No GIGs found</h5>
+                    <p class="mb-0">Use the form above to create your first Common Interest Group.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover" id="gigsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>GIG Code</th>
+                                <th>GIG Name</th>
+                                <th>Company</th>
+                                <th>Chairperson</th>
+                                <th>Contact Phone</th>
+                                <th>Total Members</th>
+                                <th>Registration Date</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var gig in Model)
+                            {
+                                <tr id="gig-row-@gig.Id">
+                                    <td><strong>@gig.GigCode</strong></td>
+                                    <td>@gig.GigName</td>
+                                    <td>
+                                        <span class="badge bg-info text-dark">@gig.CompanyCode</span>
+                                        <br />
+                                        <small class="text-muted">@gig.CompanyName</small>
+                                    </td>
+                                    <td>@gig.Chairperson</td>
+                                    <td>@gig.ContactPhone</td>
+                                    <td class="text-center">@gig.TotalMembers</td>
+                                    <td>@(gig.RegistrationDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+                                    <td>
+                                        @{
+                                            var statusClass = gig.Status == "Active" ? "bg-success" :
+                                            gig.Status == "Inactive" ? "bg-secondary" :
+                                            gig.Status == "Pending" ? "bg-warning" : "bg-danger";
+                                        }
+                                        <span class="badge @statusClass">@gig.Status</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-info view-btn" title="View Details" data-id="@gig.Id">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary edit-btn" title="Edit" data-id="@gig.Id">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger delete-btn" title="Delete" data-id="@gig.Id" data-name="@gig.GigName">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-3 text-muted">
+                    <small>Total: @Model.Count() GIG(s)</small>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- View GIG Modal -->
+<div class="modal fade" id="viewGIGModal" tabindex="-1" aria-labelledby="viewGIGModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="viewGIGModalLabel">
+                    <i class="bi bi-eye me-2"></i>GIG Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="fw-bold text-muted">GIG Code:</label>
+                        <p class="mb-0" id="view_GigCode">-</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="fw-bold text-muted">GIG Name:</label>
+                        <p class="mb-0" id="view_GigName">-</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="fw-bold text-muted">Company:</label>
+                        <p class="mb-0" id="view_Company">-</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="fw-bold text-muted">Chairperson:</label>
+                        <p class="mb-0" id="view_Chairperson">-</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="fw-bold text-muted">Contact Phone:</label>
+                        <p class="mb-0" id="view_ContactPhone">-</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="fw-bold text-muted">Contact Email:</label>
+                        <p class="mb-0" id="view_ContactEmail">-</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="fw-bold text-muted">Registration Date:</label>
+                        <p class="mb-0" id="view_RegistrationDate">-</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="fw-bold text-muted">Total Members:</label>
+                        <p class="mb-0" id="view_TotalMembers">-</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="fw-bold text-muted">Status:</label>
+                        <p class="mb-0" id="view_Status">-</p>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="fw-bold text-muted">Blockchain Transaction ID:</label>
+                        <p class="mb-0 text-muted small" id="view_BlockchainTxId">-</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; text-align:center; padding-top:20%;">
+    <div class="spinner-border text-light" style="width:4rem; height:4rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <div class="text-light mt-3" id="loadingMessage" style="font-size:1.2rem; font-weight:500;">Processing...</div>
+</div>
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable if DataTables is loaded
+            if ($.fn.DataTable && $('#gigsTable').length) {
+                if ($.fn.DataTable.isDataTable('#gigsTable')) {
+                    $('#gigsTable').DataTable().destroy();
+                }
+                $('#gigsTable').DataTable({
+                    pageLength: 10,
+                    ordering: true,
+                    responsive: true,
+                    searching: false,
+                    paging: true,
+                    language: {
+                        lengthMenu: "Show _MENU_ GIGs per page",
+                        info: "Showing _START_ to _END_ of _TOTAL_ GIGs",
+                        infoEmpty: "No GIGs found",
+                        zeroRecords: "No matching GIGs found"
+                    }
+                });
+            }
+
+            // ============================================================
+            // COMPANY CHANGE - regenerate GIG code for the selected company
+            // ============================================================
+            $('#CompanyCode').on('change', function () {
+                var code = $(this).val();
+                if (!code) {
+                    $('#GigCode').val('');
+                    return;
+                }
+                $.ajax({
+                    url: '@Url.Action("GenerateGIGCode", "CIGs")',
+                    type: 'GET',
+                    data: { companyCode: code },
+                    success: function (resp) {
+                        if (resp.success) {
+                            $('#GigCode').val(resp.gigCode);
+                        }
+                    }
+                });
+            });
+
+            // ============================================================
+            // HANDLE FORM SUBMISSION
+            // ============================================================
+            $('#gigForm').on('submit', function(e) {
+                e.preventDefault();
+
+                var isValid = true;
+                var errorMessages = [];
+
+                var companyCode = $('#CompanyCode').val();
+                if (!companyCode) {
+                    isValid = false;
+                    errorMessages.push('Company Code is required');
+                    $('#CompanyCode').addClass('is-invalid');
+                } else {
+                    $('#CompanyCode').removeClass('is-invalid');
+                }
+
+                var gigName = $('#GigName').val();
+                if (!gigName || !gigName.trim()) {
+                    isValid = false;
+                    errorMessages.push('GIG Name is required');
+                    $('#GigName').addClass('is-invalid');
+                } else {
+                    $('#GigName').removeClass('is-invalid');
+                }
+
+                if (!isValid) {
+                    showToast('error', 'Please fix the following errors:\n' + errorMessages.join('\n'));
+                    return;
+                }
+
+                var formData = {
+                    Id: $('#gigId').val() ? parseInt($('#gigId').val()) : null,
+                    GigCode: $('#GigCode').val(),
+                    GigName: $('#GigName').val().trim(),
+                    CompanyCode: $('#CompanyCode').val(),
+                    Chairperson: $('#Chairperson').val().trim() || null,
+                    ContactPhone: $('#ContactPhone').val().trim() || null,
+                    ContactEmail: $('#ContactEmail').val().trim() || null,
+                    RegistrationDate: $('#RegistrationDate').val() || null,
+                    TotalMembers: parseInt($('#TotalMembers').val()) || 0,
+                    Status: $('#Status').val()
+                };
+
+                console.log('Sending data:', formData);
+
+                var gigId = $('#gigId').val();
+                var url = '';
+
+                if (gigId && gigId !== '') {
+                    url = '/CIGs/Edit?id=' + gigId;
+                } else {
+                    url = '/CIGs/Create';
+                }
+
+                var submitBtn = $('#submitBtn');
+                var originalText = submitBtn.html();
+                submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving...');
+
+                showLoading(true, 'Saving GIG...');
+
+                var token = $('input[name="__RequestVerificationToken"]').val();
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    headers: {
+                        'RequestVerificationToken': token
+                    },
+                    success: function(response) {
+                        console.log('Response:', response);
+                        showLoading(false);
+                        if (response.success) {
+                            showToast('success', response.message);
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1500);
+                        } else {
+                            showToast('error', response.message || 'An error occurred');
+                            submitBtn.prop('disabled', false).html(originalText);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        showLoading(false);
+                        console.error('AJAX Error:', xhr);
+                        var message = 'An error occurred. Please try again.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        } else if (xhr.responseText) {
+                            try {
+                                var response = JSON.parse(xhr.responseText);
+                                if (response.message) message = response.message;
+                            } catch(e) {
+                                message = xhr.responseText.substring(0, 200);
+                            }
+                        }
+                        showToast('error', message);
+                        submitBtn.prop('disabled', false).html(originalText);
+                    }
+                });
+            });
+
+            // ============================================================
+            // SEARCH BUTTON SPINNER
+            // ============================================================
+            $('#searchBtn').click(function() {
+                var $btn = $(this);
+                var originalText = $btn.html();
+                $btn.html('<span class="spinner-border spinner-border-sm" role="status"></span>').prop('disabled', true);
+                setTimeout(function() {
+                    $btn.html(originalText).prop('disabled', false);
+                }, 3000);
+            });
+
+            // ============================================================
+            // CLEAR SEARCH BUTTON
+            // ============================================================
+            $('#clearSearchBtn').click(function() {
+                showLoading(true, 'Clearing search...');
+                setTimeout(function() {
+                    showLoading(false);
+                }, 500);
+            });
+
+            // ============================================================
+            // EDIT / VIEW / DELETE - Event Delegation
+            // ============================================================
+            $(document).on('click', '.edit-btn', function() {
+                editGIG($(this).data('id'));
+            });
+            $(document).on('click', '.view-btn', function() {
+                viewDetails($(this).data('id'));
+            });
+            $(document).on('click', '.delete-btn', function() {
+                deleteGIG($(this).data('id'), $(this).data('name'));
+            });
+        });
+
+        // ============================================================
+        // LOADING OVERLAY
+        // ============================================================
+        function showLoading(show, message) {
+            if (show) {
+                $('#loadingOverlay').fadeIn(200);
+                if (message) {
+                    $('#loadingMessage').text(message);
+                }
+            } else {
+                $('#loadingOverlay').fadeOut(200);
+                $('#loadingMessage').text('Processing...');
+            }
+        }
+
+        // ============================================================
+        // TOAST
+        // ============================================================
+        function showToast(type, message) {
+            var icon = type === 'success' ? 'success' :
+                       type === 'warning' ? 'warning' :
+                       type === 'info' ? 'info' : 'error';
+            var color = type === 'success' ? '#28a745' :
+                        type === 'warning' ? '#ffc107' :
+                        type === 'info' ? '#17a2b8' : '#dc3545';
+
+            Swal.fire({
+                icon: icon,
+                title: type.charAt(0).toUpperCase() + type.slice(1),
+                text: message,
+                timer: 3000,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end',
+                background: '#fff',
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.style.borderLeft = `4px solid ${color}`;
+                }
+            });
+        }
+
+        // ============================================================
+        // RESET FORM
+        // ============================================================
+        function resetForm() {
+            $('#gigForm')[0].reset();
+            $('#gigId').val('');
+            $('#CompanyCode').val('');
+            $('#formTitle').html('<i class="bi bi-plus-circle me-2"></i>Add New GIG');
+            $('#submitBtn').html('<i class="bi bi-save me-2"></i>Save GIG');
+            $('#GigName').removeClass('is-invalid');
+            $('#CompanyCode').removeClass('is-invalid');
+
+            showLoading(true, 'Generating GIG Code...');
+            $.ajax({
+                url: '@Url.Action("GenerateGIGCode", "CIGs")',
+                type: 'GET',
+                success: function(response) {
+                    showLoading(false);
+                    if (response.success) {
+                        $('#GigCode').val(response.gigCode);
+                        showToast('info', 'New GIG Code generated');
+                    } else {
+                        showToast('warning', 'Could not generate GIG code.');
+                    }
+                },
+                error: function() {
+                    showLoading(false);
+                    showToast('error', 'Error generating GIG code.');
+                }
+            });
+        }
+
+        // ============================================================
+        // EDIT
+        // ============================================================
+        function editGIG(id) {
+            showLoading(true, 'Loading GIG details...');
+
+            $.ajax({
+                url: '@Url.Action("GetGIGDetails", "CIGs")',
+                type: 'GET',
+                data: { id: id },
+                success: function(response) {
+                    showLoading(false);
+                    if (response.success) {
+                        var gig = response.gig;
+                        $('#gigId').val(gig.id);
+                        $('#CompanyCode').val(gig.companyCode);
+                        $('#GigCode').val(gig.gigCode);
+                        $('#GigName').val(gig.gigName);
+                        $('#Chairperson').val(gig.chairperson || '');
+                        $('#ContactPhone').val(gig.contactPhone || '');
+                        $('#ContactEmail').val(gig.contactEmail || '');
+                        $('#RegistrationDate').val(gig.registrationDate ? gig.registrationDate.split('T')[0] : '');
+                        $('#TotalMembers').val(gig.totalMembers || 0);
+                        $('#Status').val(gig.status || 'Active');
+
+                        $('#formTitle').html('<i class="bi bi-pencil-square me-2"></i>Edit GIG');
+                        $('#submitBtn').html('<i class="bi bi-save me-2"></i>Update GIG');
+
+                        $('#gigFormCard')[0].scrollIntoView({ behavior: 'smooth' });
+                        showToast('info', 'GIG loaded for editing');
+                    } else {
+                        showToast('error', response.message || 'Error loading GIG details');
+                    }
+                },
+                error: function() {
+                    showLoading(false);
+                    showToast('error', 'Error loading GIG details. Please try again.');
+                }
+            });
+        }
+
+        // ============================================================
+        // VIEW
+        // ============================================================
+        function viewDetails(id) {
+            showLoading(true, 'Loading GIG details...');
+
+            $.ajax({
+                url: '@Url.Action("GetGIGDetails", "CIGs")',
+                type: 'GET',
+                data: { id: id },
+                success: function(response) {
+                    showLoading(false);
+                    if (response.success) {
+                        var gig = response.gig;
+                        $('#view_GigCode').text(gig.gigCode || '-');
+                        $('#view_GigName').text(gig.gigName || '-');
+                        $('#view_Company').text((gig.companyName || '') + ' (' + (gig.companyCode || '') + ')');
+                        $('#view_Chairperson').text(gig.chairperson || '-');
+                        $('#view_ContactPhone').text(gig.contactPhone || '-');
+                        $('#view_ContactEmail').text(gig.contactEmail || '-');
+                        $('#view_RegistrationDate').text(gig.registrationDate ? new Date(gig.registrationDate).toLocaleDateString() : '-');
+                        $('#view_TotalMembers').text(gig.totalMembers || '0');
+                        var statusClass = gig.status === 'Active' ? 'success' :
+                                        gig.status === 'Inactive' ? 'secondary' :
+                                        gig.status === 'Pending' ? 'warning' : 'danger';
+                        $('#view_Status').html('<span class="badge bg-' + statusClass + '">' + (gig.status || 'Unknown') + '</span>');
+                        $('#view_BlockchainTxId').text(gig.blockchainTxId || 'Not recorded');
+
+                        var modal = new bootstrap.Modal(document.getElementById('viewGIGModal'));
+                        modal.show();
+                    } else {
+                        showToast('error', response.message || 'Error loading GIG details');
+                    }
+                },
+                error: function() {
+                    showLoading(false);
+                    showToast('error', 'Error loading GIG details. Please try again.');
+                }
+            });
+        }
+
+        // ============================================================
+        // DELETE
+        // ============================================================
+        function deleteGIG(id, gigName) {
+            Swal.fire({
+                title: 'Delete GIG?',
+                html: `
+                    <p>You are about to delete GIG <strong>${gigName}</strong>.</p>
+                    <p style="color: #dc3545; font-weight: bold;">⚠️ This action cannot be undone!</p>
+                    <p>All associated data will be permanently removed.</p>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Delete',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    var token = $('input[name="__RequestVerificationToken"]').val();
+                    showLoading(true, 'Deleting GIG...');
+
+                    $.ajax({
+                        url: '@Url.Action("Delete", "CIGs")',
+                        type: 'POST',
+                        data: { id: id, __RequestVerificationToken: token },
+                        success: function(response) {
+                            showLoading(false);
+                            if (response.success) {
+                                showToast('success', response.message);
+                                setTimeout(function() {
+                                    location.reload();
+                                }, 1000);
+                            } else {
+                                showToast('error', response.message || 'Error deleting GIG');
+                            }
+                        },
+                        error: function() {
+                            showLoading(false);
+                            showToast('error', 'An error occurred. Please try again.');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Expose to global
+        window.editGIG = editGIG;
+        window.viewDetails = viewDetails;
+        window.deleteGIG = deleteGIG;
+        window.resetForm = resetForm;
+        window.showLoading = showLoading;
+        window.showToast = showToast;
+    </script>
+}
+
+<style>
+    #loadingOverlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 9999;
+        text-align: center;
+        padding-top: 20%;
+    }
+
+        #loadingOverlay .spinner-border {
+            width: 4rem;
+            height: 4rem;
+        }
+
+        #loadingOverlay .text-light {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+    .toast {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-radius: 8px;
+    }
+
+        .toast .toast-body {
+            padding: 12px 16px;
+            font-size: 0.95rem;
+        }
+
+    .is-invalid {
+        border-color: #dc3545;
+    }
+
+        .is-invalid:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+        }
+
+    .btn .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+        border-width: 0.15em;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+        cursor: pointer;
+    }
+
+    .swal2-popup {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    .swal2-confirm {
+        padding: 10px 30px !important;
+        font-size: 14px !important;
+    }
+
+    .swal2-cancel {
+        padding: 10px 30px !important;
+        font-size: 14px !important;
+    }
+
+    @@media (max-width: 768px) {
+        .btn-group {
+            flex-direction: column;
+            gap: 3px;
+        }
+
+            .btn-group .btn {
+                width: 100%;
+            }
+
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .d-flex.justify-content-end {
+            flex-direction: column;
+            gap: 5px;
+        }
+
+            .d-flex.justify-content-end .btn {
+                width: 100%;
+            }
+
+        #loadingOverlay {
+            padding-top: 40%;
+        }
+
+            #loadingOverlay .spinner-border {
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+
+        .col-md-4.text-end {
+            text-align: left !important;
+            margin-top: 10px;
+        }
+    }
+
+    @@media print {
+        .btn-group, .btn, .nav-tabs, .card .btn {
+            display: none !important;
+        }
+
+        .table {
+            border: 1px solid #dee2e6;
+        }
+
+            .table th {
+                background-color: #f8f9fa !important;
+                color: #000 !important;
+            }
+    }
+</style>

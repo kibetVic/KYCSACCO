@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using KYCSACCO.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,16 +63,34 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         builder.Configuration.GetConnectionString("BlockchainDb"),
         sqlOptions => sqlOptions.CommandTimeout(commandTimeout)));
 
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("BlockchainDb"),
+        sqlOptions => sqlOptions.CommandTimeout(commandTimeout)));
+
+// Register Repository Pattern
+builder.Services.AddScoped<IMemberRepository, MemberRepository>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+
 // Register Application Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IGIGsService, GIGsService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IDashboardCacheService, DashboardCacheService>();
 builder.Services.AddScoped<IUserSessionService, UserSessionService>();
 builder.Services.AddScoped<ICompanyContextService, CompanyContextService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<IIpAddressHelper, IpAddressHelper>();
 builder.Services.AddScoped<IBlockchainService, BlockchainService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
+builder.Services.AddScoped<AuditTrailService>();
+builder.Services.AddScoped<IMemberService, MemberService>();
+builder.Services.AddScoped<IContributionService, ContributionService>();
+builder.Services.AddScoped<IBankService, BankService>();
+builder.Services.AddScoped<IShareTypeService, ShareTypeService>();
+builder.Services.AddScoped<IGlAccountService, GlAccountService>();
 
 var backgroundServicesEnabled = builder.Configuration.GetValue<bool>("BackgroundServices:Enabled", true);
 var transactionInterval = builder.Configuration.GetValue<int>("BackgroundServices:TransactionProcessorIntervalSeconds", 60);

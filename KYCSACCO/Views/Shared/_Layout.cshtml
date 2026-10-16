@@ -310,8 +310,6 @@
                                 <p><b>Dashboard</b></p>
                             </a>
                         </li>
-
-                        <!-- BLOCKCHAIN -->
                         <li class="nav-item">
                             <a href="#" class="nav-link">
                                 <i class="nav-icon bi bi-gear-fill"></i>
@@ -329,30 +327,23 @@
                                 </li>
 
                                 <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Account" asp-action="LockedUsers">
-                                        <i class="bi bi-lock-fill me-2"></i>
-                                        <span>Locked Users</span>
-                                        @if (ViewBag.LockedCount > 0)
-                                        {
-                                            <span class="badge bg-danger ms-2">@ViewBag.LockedCount</span>
-                                        }
+                                    <a class="nav-link" asp-controller="Bank" asp-action="Index">
+                                        <i class="bi bi-bank2 me-2"></i>
+                                        <span>Bank Setup</span>
                                     </a>
                                 </li>
 
                                 <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Account" asp-action="PendingApprovals">
-                                        <i class="bi bi-person-check-fill me-2"></i>
-                                        <span> Approvals </span>
-                                        @if (ViewBag.PendingCount > 0)
-                                        {
-                                            <span class="badge bg-warning ms-2">@ViewBag.PendingCount</span>
-                                        }
+                                    <a class="nav-link" asp-controller="ShareTypeMvc" asp-action="Index">
+                                        <i class="bi bi-pie-chart-fill me-2"></i>
+                                        <span>Share Types</span>
                                     </a>
                                 </li>
 
                                 <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Account" asp-action="CompanySwitch">
-                                        <i class="bi bi-arrow-left-right"></i> Switch Company
+                                    <a class="nav-link" asp-controller="GlSetup" asp-action="Index">
+                                        <i class="bi bi-journal-bookmark-fill me-2"></i>
+                                        <span>Gl Accounts</span>
                                     </a>
                                 </li>
                             </ul>
@@ -374,6 +365,21 @@
                                         <p>Sacco Registration</p>
                                     </a>
                                 </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="CIGs" asp-action="Index">
+                                        <i class="bi bi-people-fill me-2"></i>
+                                        <p>CIGS/MVG</p>
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="MemberMvc" asp-action="Index">
+                                        <i class="bi bi-person-vcard-fill"></i>
+                                        <p>Members Reg</p>
+                                    </a>
+                                </li>
+
                                 <li class="nav-item">
                                     <a class="nav-link" asp-controller="Location" asp-action="Counties">
                                         <i class="bi bi-geo-alt-fill me-2"></i>
@@ -401,20 +407,20 @@
                             <a href="#" class="nav-link">
                                 <i class="nav-icon bi bi-tools"></i>
                                 <p>
-                                    <b>Function</b>
+                                    <b>Transactions</b>
                                     <i class="nav-arrow bi bi-chevron-right float-end"></i>
                                 </p>
                             </a>
                             <ul class="nav nav-treeview ms-2 border-start border-primary border-opacity-25 ps-2">
 
                                 <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Functions" asp-action="Reverse">
+                                    <a class="nav-link" asp-controller="ContributionMvc" asp-action="index">
                                         <i class="bi bi-arrow-counterclockwise me-2"></i>
-                                        <p>Reverse transaction</p>
+                                        <p>Shares posting</p>
                                     </a>
                                 </li>
 
-                                <li class="nav-item">
+                               @*  <li class="nav-item">
                                     <a class="nav-link" asp-controller="Functions" asp-action="DeleteContributionIndex">
                                         <i class="bi bi-receipt-cutoff me-2"></i>
                                         <p>Delete Transaction</p>
@@ -433,7 +439,7 @@
                                         <i class="bi bi-journal-text me-2"></i>
                                         <p>Reverse / Delete Journal</p>
                                     </a>
-                                </li>
+                                </li> *@
                             </ul>
                         </li>
                         <li class="nav-item">
