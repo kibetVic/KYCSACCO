@@ -1,0 +1,1073 @@
+﻿@model IEnumerable<KYCSACCO.Models.DTOs.BankResponseDTO>
+@{
+    ViewData["Title"] = "Banks";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var banks = Model.ToList();
+    var companies = ViewBag.Companies as List<KYCSACCO.Services.KycCompanyLookupDTO>
+                    ?? new List<KYCSACCO.Services.KycCompanyLookupDTO>();
+    var selectedCompanyCode = ViewBag.SelectedCompanyCode as string;
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <h2 class="page-title mb-0">
+                        <i class="bi bi-bank me-2"></i>Banks Management
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div id="operationStatus" class="alert d-none" role="alert">
+        <div class="d-flex align-items-center">
+            <span id="operationSpinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+            <i id="operationIcon" class="bi me-2"></i>
+            <span id="operationMessage"></span>
+        </div>
+    </div>
+
+    <!-- BANK FORM -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="bi bi-plus-circle me-2"></i>
+                <span id="formTitle">Add New Bank</span>
+            </h4>
+            <span id="formStatusBadge" class="badge bg-light text-dark d-none">
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                <span id="formStatusText">Loading...</span>
+            </span>
+        </div>
+        <div class="card-body">
+            <div id="formStatus" class="alert d-none" role="alert"></div>
+
+            <form id="bankForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="bank_Id" name="Id" value="0" />
+
+                @* <!-- COMPANY SELECTOR -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="CompanyCode" class="form-label fw-bold required">Company</label>
+                        <select class="form-select" id="CompanyCode" name="CompanyCode" required>
+                            <option value="">-- Select Company --</option>
+                            @foreach (var c in companies)
+                            {
+                                <option value="@c.CompanyCode">@c.DisplayText</option>
+                            }
+                        </select>
+                    </div>
+                </div> *@
+
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="CompanyCode" class="form-label fw-bold required">Company</label>
+                        <select class="form-select" id="CompanyCode" name="CompanyCode" required>
+                            <option value="">-- Select Company --</option>
+                            @foreach (var c in companies)
+                            {
+                                <option value="@c.CompanyCode">@c.DisplayText</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="BankCode" class="form-label fw-bold required">Bank Code</label>
+                        <input type="text" class="form-control" id="BankCode" name="BankCode"
+                               required maxlength="50" placeholder="e.g., KCB, EQTY" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="BankName" class="form-label fw-bold required">Bank Name</label>
+                        <input type="text" class="form-control" id="BankName" name="BankName"
+                               required maxlength="200" placeholder="e.g., Kenya Commercial Bank" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="AccountNumber" class="form-label fw-bold required">Account Number</label>
+                        <input type="text" class="form-control" id="AccountNumber" name="AccountNumber"
+                               required maxlength="50" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="AccountName" class="form-label fw-bold">Account Name</label>
+                        <input type="text" class="form-control" id="AccountName" name="AccountName" maxlength="100" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="Branch" class="form-label fw-bold">Branch</label>
+                        <input type="text" class="form-control" id="Branch" name="Branch" maxlength="100" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="SwiftCode" class="form-label fw-bold">Swift Code</label>
+                        <input type="text" class="form-control" id="SwiftCode" name="SwiftCode" maxlength="50" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="SortCode" class="form-label fw-bold">Sort Code</label>
+                        <input type="text" class="form-control" id="SortCode" name="SortCode" maxlength="50" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" id="IsActive" name="IsActive"
+                                   value="true" checked />
+                            <label class="form-check-label fw-bold" for="IsActive">Active</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="GlAccountNo" class="form-label fw-bold">GL Account</label>
+                        <select class="form-select" id="GlAccountNo" name="GlAccountNo">
+                            <option value="">-- Loading GL Accounts... --</option>
+                        </select>
+                        <small class="text-muted" id="glAccountHelp">Select the GL account associated with this bank</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="Notes" class="form-label fw-bold">Notes</label>
+                        <textarea class="form-control" id="Notes" name="Notes" rows="1" maxlength="400"></textarea>
+                    </div>
+                </div>
+
+                <div class="row mt-2">
+                    <div class="col-md-12">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="submit" class="btn btn-primary" id="saveBankBtn">
+                                <span class="spinner-border spinner-border-sm me-2 d-none" id="saveBankSpinner" role="status"></span>
+                                <i class="bi bi-save me-2" id="saveBankIcon"></i>
+                                <span id="saveBankText">Save Bank</span>
+                            </button>
+                            <button type="button" class="btn btn-warning d-none" id="cancelEditBtn" onclick="cancelEdit()">
+                                <i class="bi bi-x-circle"></i> Cancel Edit
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="resetBankForm()">
+                                <i class="bi bi-eraser"></i> Clear Form
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- BANK LIST -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <div class="row align-items-center g-2">
+                <div class="col-md-3">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-list-check me-2"></i>Bank Accounts
+                    </h5>
+                </div>
+                <div class="col-md-9">
+                    <form asp-action="Index" method="get" class="d-flex gap-2 flex-wrap justify-content-end" id="searchForm">
+                        <div class="input-group" style="max-width: 320px;">
+                            <input type="text" name="search" class="form-control"
+                                   placeholder="Search by code, name, account or branch..."
+                                   value="@ViewBag.CurrentSearch" id="searchInput" />
+                            <button type="submit" class="btn btn-outline-secondary">
+                                <i class="bi bi-search"></i>
+                            </button>
+                            @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch as string))
+                            {
+                                <a asp-action="Index" class="btn btn-outline-danger">
+                                    <i class="bi bi-x-lg"></i> Clear
+                                </a>
+                            }
+                        </div>
+
+                        <select name="companyCode" id="companyFilter" class="form-select" style="max-width: 260px;"
+                                onchange="this.form.submit()">
+                            <option value="">All KYC Companies</option>
+                            @foreach (var c in companies)
+                            {
+                                <option value="@c.CompanyCode"
+                                        selected="@(selectedCompanyCode == c.CompanyCode)">
+                                    @c.DisplayText
+                                </option>
+                            }
+                        </select>
+
+                        <div class="form-check form-switch d-flex align-items-center">
+                            <input class="form-check-input" type="checkbox" name="showInactive"
+                                   id="showInactive" value="true"
+                                   @(ViewBag.ShowInactive == true ? "checked" : "")
+                                   onchange="this.form.submit()" />
+                            <label class="form-check-label ms-2" for="showInactive">Show Inactive</label>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="tableStatus" class="alert d-none" role="alert"></div>
+
+            <div id="tableLoading" style="display: none;" class="text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted" id="tableLoadingText">Loading banks...</p>
+            </div>
+
+            <div id="tableContent">
+                @if (!banks.Any())
+                {
+                    <div class="alert alert-info text-center py-5">
+                        <i class="bi bi-info-circle fs-1"></i>
+                        <h5 class="mt-3">No banks found</h5>
+                        <p class="mb-0">Use the form above to create your first bank account.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="banksTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 8%">Bank Code</th>
+                                    <th style="width: 15%">Bank Name</th>
+                                    <th style="width: 12%">Company</th>
+                                    <th style="width: 12%">Account Number</th>
+                                    <th style="width: 13%">Account Name</th>
+                                    <th style="width: 10%">Branch</th>
+                                    <th style="width: 13%">GL Account</th>
+                                    <th style="width: 7%">Status</th>
+                                    <th style="width: 10%" class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var bank in banks)
+                                {
+                                    <tr class="@(!bank.IsActive ? "table-secondary" : "")" id="bank-row-@bank.Id">
+                                        <td><strong>@bank.BankCode</strong></td>
+                                        <td>@bank.BankName</td>
+                                        <td>
+                                            <span class="badge bg-primary">@bank.CompanyCode</span>
+                                            @if (!string.IsNullOrEmpty(bank.CompanyName))
+                                            {
+                                                <small class="text-muted d-block">@bank.CompanyName</small>
+                                            }
+                                        </td>
+                                        <td>@bank.AccountNumber</td>
+                                        <td>@(bank.AccountName ?? "-")</td>
+                                        <td>@(bank.Branch ?? "-")</td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(bank.GlAccountNo))
+                                            {
+                                                <span class="badge bg-info">@bank.GlAccountNo</span>
+                                                <small class="text-muted d-block">@(bank.GlAccountName ?? "")</small>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Not assigned</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (bank.IsActive)
+                                            {
+                                                <span class="badge bg-success">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-sm btn-outline-info btn-view"
+                                                        title="View Details" onclick="viewDetails(@bank.Id)" data-id="@bank.Id">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-primary btn-edit"
+                                                        title="Edit" onclick="loadBankForEdit(@bank.Id)" data-id="@bank.Id">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-warning btn-toggle"
+                                                        title="@(bank.IsActive ? "Deactivate" : "Activate")"
+                                                        onclick="toggleStatus(@bank.Id, '@bank.BankName', @bank.IsActive.ToString().ToLower())"
+                                                        data-id="@bank.Id">
+                                                    <i class="bi bi-power"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
+                                                        title="Delete"
+                                                        onclick="deleteBank(@bank.Id, '@bank.BankName')"
+                                                        data-id="@bank.Id">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3 text-muted">
+                        <small>Total: @banks.Count bank(s)</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Bank Modal -->
+<div class="modal fade" id="viewBankModal" tabindex="-1" aria-labelledby="viewBankModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="viewBankModalLabel">
+                    <i class="bi bi-eye me-2"></i>Bank Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="viewLoading" class="text-center p-4">
+                    <div class="spinner-border text-info" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading bank details...</p>
+                </div>
+
+                <div id="viewError" class="alert alert-danger d-none" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span id="viewErrorText">Error loading bank details.</span>
+                </div>
+
+                <div id="viewContent" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold text-muted">Bank Code:</label>
+                            <p class="mb-0" id="view_BankCode">-</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold text-muted">Bank Name:</label>
+                            <p class="mb-0" id="view_BankName">-</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold text-muted">Company:</label>
+                            <p class="mb-0" id="view_Company">-</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold text-muted">Account Number:</label>
+                            <p class="mb-0" id="view_AccountNumber">-</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold text-muted">Account Name:</label>
+                            <p class="mb-0" id="view_AccountName">-</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold text-muted">Branch:</label>
+                            <p class="mb-0" id="view_Branch">-</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold text-muted">Swift Code:</label>
+                            <p class="mb-0" id="view_SwiftCode">-</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold text-muted">Sort Code:</label>
+                            <p class="mb-0" id="view_SortCode">-</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="fw-bold text-muted">GL Account:</label>
+                            <p class="mb-0" id="view_GlAccount">-</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="fw-bold text-muted">Status:</label>
+                            <p class="mb-0" id="view_Status">-</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="fw-bold text-muted">Notes:</label>
+                            <p class="mb-0" id="view_Notes">-</p>
+                        </div>
+                    </div>
+                    <hr />
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold text-muted">Created By:</label>
+                            <p class="mb-0" id="view_CreatedBy">-</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold text-muted">Created At:</label>
+                            <p class="mb-0" id="view_CreatedAt">-</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold text-muted">Modified By:</label>
+                            <p class="mb-0" id="view_ModifiedBy">-</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold text-muted">Modified At:</label>
+                            <p class="mb-0" id="view_ModifiedAt">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .required:after {
+        content: " *";
+        color: red;
+    }
+
+    .card {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .alert {
+        animation: slideDown 0.5s ease;
+    }
+
+    @@keyframes slideDown {
+        from {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .d-flex {
+        display: flex;
+    }
+
+    .gap-2 {
+        gap: 0.5rem;
+    }
+
+    .flex-wrap {
+        flex-wrap: wrap;
+    }
+
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .editing-row {
+        background-color: #fff3cd !important;
+        transition: background-color 0.3s ease;
+    }
+
+    #banksTable tbody tr {
+        animation: fadeIn 0.3s ease;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .status-pulse {
+        animation: pulse 1.5s infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.6;
+        }
+    }
+
+    #operationStatus {
+        transition: all 0.3s ease;
+    }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let glAccountsList = [];
+        let currentEditId = 0;
+
+        $(document).ready(function () {
+            loadGlAccounts();
+
+            $('#CompanyCode').on('change', function () {
+                var companyCode = $(this).val();
+                if (companyCode) {
+                    loadGlAccounts(companyCode);
+                } else {
+                    $('#GlAccountNo').html('<option value="">-- Select Company first --</option>');
+                    $('#glAccountHelp').text('Select a company to load its GL accounts');
+                }
+            });
+
+            if ($.fn.DataTable) {
+                $('#banksTable').DataTable({
+                    pageLength: 10,
+                    ordering: true,
+                    responsive: true,
+                    searching: false,
+                    paging: true,
+                    language: {
+                        lengthMenu: "Show _MENU_ banks per page",
+                        info: "Showing _START_ to _END_ of _TOTAL_ banks",
+                        infoEmpty: "No banks found",
+                        zeroRecords: "No matching banks found"
+                    }
+                });
+            }
+
+            $('#bankForm').on('submit', function (e) {
+                e.preventDefault();
+                saveBank();
+            });
+        });
+
+        function showOperationStatus(type, message) {
+            const $status = $('#operationStatus');
+            const $spinner = $('#operationSpinner');
+            const $icon = $('#operationIcon');
+            const $msg = $('#operationMessage');
+
+            $status.removeClass('d-none alert-info alert-success alert-danger alert-warning');
+
+            if (type === 'loading') {
+                $status.addClass('alert-info');
+                $spinner.removeClass('d-none');
+                $icon.addClass('d-none');
+            } else {
+                $spinner.addClass('d-none');
+                $icon.removeClass('d-none');
+                if (type === 'success') {
+                    $status.addClass('alert-success');
+                    $icon.attr('class', 'bi bi-check-circle-fill me-2');
+                } else if (type === 'error') {
+                    $status.addClass('alert-danger');
+                    $icon.attr('class', 'bi bi-exclamation-triangle-fill me-2');
+                } else {
+                    $status.addClass('alert-warning');
+                    $icon.attr('class', 'bi bi-info-circle-fill me-2');
+                }
+            }
+
+            $msg.text(message);
+            if (type === 'success' || type === 'info') {
+                clearTimeout(window._operationStatusTimer);
+                window._operationStatusTimer = setTimeout(hideOperationStatus, 4000);
+            }
+        }
+
+        function hideOperationStatus() { $('#operationStatus').addClass('d-none'); }
+
+        function showFormStatus(type, message) {
+            const $status = $('#formStatus');
+            const $badge = $('#formStatusBadge');
+            const $badgeText = $('#formStatusText');
+
+            $status.removeClass('d-none alert-info alert-success alert-danger alert-warning');
+
+            if (type === 'loading') {
+                $status.addClass('alert-info');
+                $status.html(`<span class="spinner-border spinner-border-sm me-2" role="status"></span>${message}`);
+                $badge.removeClass('d-none').addClass('status-pulse');
+                $badgeText.text(message);
+            } else {
+                $badge.addClass('d-none').removeClass('status-pulse');
+                if (type === 'success') {
+                    $status.addClass('alert-success');
+                    $status.html(`<i class="bi bi-check-circle-fill me-2"></i>${message}`);
+                } else if (type === 'error') {
+                    $status.addClass('alert-danger');
+                    $status.html(`<i class="bi bi-exclamation-triangle-fill me-2"></i>${message}`);
+                } else {
+                    $status.addClass('alert-warning');
+                    $status.html(`<i class="bi bi-info-circle-fill me-2"></i>${message}`);
+                }
+                clearTimeout(window._formStatusTimer);
+                window._formStatusTimer = setTimeout(() => $status.addClass('d-none'), 5000);
+            }
+        }
+
+        function hideFormStatus() {
+            $('#formStatus').addClass('d-none');
+            $('#formStatusBadge').addClass('d-none').removeClass('status-pulse');
+        }
+
+        function setRowButtonLoading(btnSelector, loading, originalHtml) {
+            const $btn = $(btnSelector);
+            if (!$btn.length) return;
+            if (loading) {
+                $btn.data('original-html', $btn.html());
+                $btn.prop('disabled', true);
+                $btn.html('<span class="spinner-border spinner-border-sm" role="status"></span>');
+            } else {
+                $btn.prop('disabled', false);
+                $btn.html(originalHtml || $btn.data('original-html') || '<i class="bi bi-arrow-clockwise"></i>');
+            }
+        }
+
+        function loadGlAccounts(companyCode) {
+            const $dropdown = $('#GlAccountNo');
+            const $help = $('#glAccountHelp');
+            $dropdown.html('<option value="">⏳ Loading GL Accounts...</option>');
+            $dropdown.prop('disabled', true);
+
+            var url = '@Url.Action("GetGlAccounts", "Bank")';
+            if (companyCode) {
+                url += '?companyCode=' + encodeURIComponent(companyCode);
+            }
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function (response) {
+                    $dropdown.prop('disabled', false);
+                    if (response.success && response.data && response.data.length > 0) {
+                        glAccountsList = response.data;
+                        populateGlDropdown('#GlAccountNo', glAccountsList);
+                        $help.text(`Select from ${glAccountsList.length} available GL account(s)`);
+                    } else if (response.success) {
+                        $dropdown.html('<option value="">-- No GL accounts available --</option>');
+                        $help.html('<span class="text-warning"><i class="bi bi-exclamation-triangle"></i> No GL accounts found for this company</span>');
+                    } else {
+                        $dropdown.html('<option value="">-- Error loading --</option>');
+                        $help.html('<span class="text-danger"><i class="bi bi-x-circle"></i> ' + (response.message || 'Failed to load GL accounts') + '</span>');
+                    }
+                },
+                error: function () {
+                    $dropdown.prop('disabled', false);
+                    $dropdown.html('<option value="">-- Error loading --</option>');
+                    $help.html('<span class="text-danger"><i class="bi bi-x-circle"></i> Network error loading GL accounts</span>');
+                    showOperationStatus('error', 'Failed to load GL accounts. Bank creation may be limited.');
+                }
+            });
+        }
+
+        function populateGlDropdown(selector, accounts) {
+            const $dropdown = $(selector);
+            $dropdown.empty();
+            $dropdown.append('<option value="">-- Select GL Account --</option>');
+            accounts.forEach(function (account) {
+                $dropdown.append(`<option value="${account.accNo}">${account.displayText}</option>`);
+            });
+        }
+
+        function saveBank() {
+            const id = parseInt($('#bank_Id').val()) || 0;
+            const isEdit = id > 0;
+            const operation = isEdit ? 'update' : 'create';
+
+            const companyCode = $('#CompanyCode').val();
+            const bankCode = $('#BankCode').val().trim();
+            const bankName = $('#BankName').val().trim();
+            const accountNumber = $('#AccountNumber').val().trim();
+
+            if (!companyCode) {
+                const msg = 'Please select a Company.';
+                showFormStatus('error', msg);
+                Swal.fire('Validation Error', msg, 'error');
+                return;
+            }
+            if (!bankCode || !bankName || !accountNumber) {
+                const msg = 'Please fill in all required fields (Bank Code, Bank Name, Account Number).';
+                showFormStatus('error', msg);
+                Swal.fire('Validation Error', msg, 'error');
+                return;
+            }
+
+            setSaveButtonLoading(true);
+            showFormStatus('loading', isEdit ? 'Updating bank...' : 'Saving bank...');
+            showOperationStatus('loading', isEdit ? 'Updating bank, please wait...' : 'Saving bank, please wait...');
+
+            const url = isEdit
+                ? '@Url.Action("Edit", "Bank")' + '?id=' + id
+                : '@Url.Action("Create", "Bank")';
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: $('#bankForm').serialize(),
+                success: function (response) {
+                    setSaveButtonLoading(false);
+                    if (response.success) {
+                        const successMsg = response.message || (isEdit ? 'Bank updated successfully.' : 'Bank created successfully.');
+                        showFormStatus('success', successMsg);
+                        showOperationStatus('success', successMsg);
+                        showToast('success', successMsg);
+                        Swal.fire({
+                            title: isEdit ? 'Updated!' : 'Created!',
+                            text: successMsg,
+                            icon: 'success',
+                            timer: 1800,
+                            showConfirmButton: false
+                        }).then(() => { location.reload(); });
+                    } else {
+                        const errorMsg = response.message || (isEdit ? 'Failed to update bank.' : 'Failed to create bank.');
+                        showFormStatus('error', errorMsg);
+                        showOperationStatus('error', errorMsg);
+                        Swal.fire('Error', errorMsg, 'error');
+                    }
+                },
+                error: function (xhr) {
+                    setSaveButtonLoading(false);
+                    let errorMsg = `An error occurred while ${operation === 'create' ? 'creating' : 'updating'} the bank.`;
+                    if (xhr.responseJSON && xhr.responseJSON.message) errorMsg = xhr.responseJSON.message;
+                    else if (xhr.status === 0) errorMsg = 'Network error. Please check your connection.';
+                    else if (xhr.status === 401) errorMsg = 'Session expired. Please log in again.';
+                    else if (xhr.status === 500) errorMsg = 'Server error. Please try again or contact support.';
+                    showFormStatus('error', errorMsg);
+                    showOperationStatus('error', errorMsg);
+                    Swal.fire('Error', errorMsg, 'error');
+                }
+            });
+        }
+
+        function setSaveButtonLoading(loading) {
+            const btn = $('#saveBankBtn');
+            const spinner = $('#saveBankSpinner');
+            const icon = $('#saveBankIcon');
+            const text = $('#saveBankText');
+            const isEdit = parseInt($('#bank_Id').val()) > 0;
+
+            if (loading) {
+                btn.prop('disabled', true);
+                spinner.removeClass('d-none');
+                icon.addClass('d-none');
+                text.text(isEdit ? 'Updating...' : 'Saving...');
+            } else {
+                btn.prop('disabled', false);
+                spinner.addClass('d-none');
+                icon.removeClass('d-none');
+                text.text(isEdit ? 'Update Bank' : 'Save Bank');
+            }
+        }
+
+        function loadBankForEdit(id) {
+            setSaveButtonLoading(true);
+            $('#formTitle').text('Loading Bank...');
+            showFormStatus('loading', 'Loading bank details...');
+            showOperationStatus('loading', 'Loading bank for editing...');
+            setRowButtonLoading(`.btn-edit[data-id="${id}"]`, true);
+
+            $.ajax({
+                url: '@Url.Action("GetBankDetails", "Bank")',
+                type: 'GET',
+                data: { id: id },
+                success: function (response) {
+                    setSaveButtonLoading(false);
+                    setRowButtonLoading(`.btn-edit[data-id="${id}"]`, false);
+
+                    if (response.success && response.bank) {
+                        const bank = response.bank;
+                        $('#bank_Id').val(bank.id);
+                        $('#CompanyCode').val(bank.companyCode || '');
+                        $('#BankCode').val(bank.bankCode);
+                        $('#BankName').val(bank.bankName);
+                        $('#AccountNumber').val(bank.accountNumber);
+                        $('#AccountName').val(bank.accountName || '');
+                        $('#Branch').val(bank.branch || '');
+                        $('#SwiftCode').val(bank.swiftCode || '');
+                        $('#SortCode').val(bank.sortCode || '');
+                        $('#IsActive').prop('checked', bank.isActive);
+                        $('#Notes').val(bank.notes || '');
+
+                        var companyCode = bank.companyCode;
+                        if (companyCode) {
+                            $.ajax({
+                                url: '@Url.Action("GetGlAccounts", "Bank")' + '?companyCode=' + encodeURIComponent(companyCode),
+                                type: 'GET',
+                                success: function (glResp) {
+                                    if (glResp.success && glResp.data) {
+                                        populateGlDropdown('#GlAccountNo', glResp.data);
+                                        $('#GlAccountNo').val(bank.glAccountNo || '');
+                                    }
+                                }
+                            });
+                        }
+
+                        currentEditId = bank.id;
+                        $('#formTitle').text('Edit Bank: ' + bank.bankName);
+                        $('#saveBankText').text('Update Bank');
+                        $('#cancelEditBtn').removeClass('d-none');
+
+                        $('tr').removeClass('editing-row');
+                        $('#bank-row-' + id).addClass('editing-row');
+
+                        $('html, body').animate({ scrollTop: $('#bankForm').offset().top - 100 }, 400);
+
+                        const msg = `Bank "${bank.bankName}" loaded for editing.`;
+                        showFormStatus('info', msg);
+                        showOperationStatus('success', msg);
+                        showToast('info', msg);
+                    } else {
+                        const errorMsg = response.message || 'Bank not found.';
+                        showFormStatus('error', errorMsg);
+                        showOperationStatus('error', errorMsg);
+                        Swal.fire('Error', errorMsg, 'error');
+                    }
+                },
+                error: function (xhr) {
+                    setSaveButtonLoading(false);
+                    setRowButtonLoading(`.btn-edit[data-id="${id}"]`, false);
+                    let errorMsg = 'Error loading bank details. Please try again.';
+                    if (xhr.status === 404) errorMsg = 'Bank not found.';
+                    if (xhr.status === 0) errorMsg = 'Network error. Check your connection.';
+                    showFormStatus('error', errorMsg);
+                    showOperationStatus('error', errorMsg);
+                    Swal.fire('Error', errorMsg, 'error');
+                }
+            });
+        }
+
+        function cancelEdit() {
+            resetBankForm();
+            showFormStatus('info', 'Edit cancelled. Form reset.');
+            showOperationStatus('info', 'Edit cancelled.');
+            showToast('info', 'Edit cancelled');
+        }
+
+        function resetBankForm() {
+            $('#bankForm')[0].reset();
+            $('#bank_Id').val('0');
+            $('#CompanyCode').val('');
+            $('#GlAccountNo').html('<option value="">-- Select Company first --</option>');
+            $('#glAccountHelp').text('Select a company to load its GL accounts');
+            $('#IsActive').prop('checked', true);
+            $('#formTitle').text('Add New Bank');
+            $('#saveBankText').text('Save Bank');
+            $('#cancelEditBtn').addClass('d-none');
+            currentEditId = 0;
+            $('tr').removeClass('editing-row');
+            hideFormStatus();
+        }
+
+        function viewDetails(id) {
+            $('#viewLoading').show();
+            $('#viewContent').hide();
+            $('#viewError').addClass('d-none');
+            $('#viewBankModal').modal('show');
+            setRowButtonLoading(`.btn-view[data-id="${id}"]`, true);
+            showOperationStatus('loading', 'Loading bank details...');
+
+            $.ajax({
+                url: '@Url.Action("GetBankDetails", "Bank")',
+                type: 'GET',
+                data: { id: id },
+                success: function (response) {
+                    setRowButtonLoading(`.btn-view[data-id="${id}"]`, false);
+                    if (response.success && response.bank) {
+                        const bank = response.bank;
+                        $('#view_BankCode').text(bank.bankCode);
+                        $('#view_BankName').text(bank.bankName);
+                        $('#view_Company').html(
+                            `<span class="badge bg-primary">${bank.companyCode || '-'}</span>` +
+                            (bank.companyName ? ` <small class="text-muted">${bank.companyName}</small>` : '')
+                        );
+                        $('#view_AccountNumber').text(bank.accountNumber);
+                        $('#view_AccountName').text(bank.accountName || '-');
+                        $('#view_Branch').text(bank.branch || '-');
+                        $('#view_SwiftCode').text(bank.swiftCode || '-');
+                        $('#view_SortCode').text(bank.sortCode || '-');
+                        $('#view_Notes').text(bank.notes || '-');
+                        $('#view_CreatedBy').text(bank.createdBy || '-');
+                        $('#view_CreatedAt').text(bank.createdAt ? new Date(bank.createdAt).toLocaleString() : '-');
+                        $('#view_ModifiedBy').text(bank.modifiedBy || '-');
+                        $('#view_ModifiedAt').text(bank.modifiedAt ? new Date(bank.modifiedAt).toLocaleString() : '-');
+
+                        if (bank.glAccountNo) {
+                            $('#view_GlAccount').html(`<strong>${bank.glAccountNo}</strong>${bank.glAccountName ? `<br><small>${bank.glAccountName}</small>` : ''}`);
+                        } else {
+                            $('#view_GlAccount').text('Not assigned');
+                        }
+
+                        const statusHtml = bank.isActive
+                            ? '<span class="badge bg-success">Active</span>'
+                            : '<span class="badge bg-secondary">Inactive</span>';
+                        $('#view_Status').html(statusHtml);
+
+                        $('#viewLoading').hide();
+                        $('#viewContent').fadeIn(200);
+                        showOperationStatus('success', `Loaded details for "${bank.bankName}"`);
+                    } else {
+                        const errorMsg = response.message || 'Bank not found.';
+                        $('#viewLoading').hide();
+                        $('#viewError').removeClass('d-none');
+                        $('#viewErrorText').text(errorMsg);
+                        showOperationStatus('error', errorMsg);
+                    }
+                },
+                error: function (xhr) {
+                    setRowButtonLoading(`.btn-view[data-id="${id}"]`, false);
+                    let errorMsg = 'Error loading bank details. Please try again.';
+                    if (xhr.status === 404) errorMsg = 'Bank not found.';
+                    if (xhr.status === 0) errorMsg = 'Network error. Check your connection.';
+                    $('#viewLoading').hide();
+                    $('#viewError').removeClass('d-none');
+                    $('#viewErrorText').text(errorMsg);
+                    showOperationStatus('error', errorMsg);
+                }
+            });
+        }
+
+        function toggleStatus(id, bankName, isActive) {
+            const action = isActive ? 'deactivate' : 'activate';
+            const actionPast = isActive ? 'deactivated' : 'activated';
+
+            Swal.fire({
+                title: 'Confirm',
+                text: `Are you sure you want to ${action} bank '${bankName}'?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    setRowButtonLoading(`.btn-toggle[data-id="${id}"]`, true);
+                    showOperationStatus('loading', `${action.charAt(0).toUpperCase() + action.slice(1)}ing bank "${bankName}"...`);
+
+                    $.ajax({
+                        url: '@Url.Action("ToggleStatus", "Bank")',
+                        type: 'POST',
+                        data: { id: id },
+                        headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                        success: function (response) {
+                            setRowButtonLoading(`.btn-toggle[data-id="${id}"]`, false);
+                            if (response.success) {
+                                const msg = `Bank "${bankName}" ${actionPast} successfully.`;
+                                showOperationStatus('success', msg);
+                                showToast('success', msg);
+                                setTimeout(() => location.reload(), 1200);
+                            } else {
+                                const errorMsg = response.message || `Failed to ${action} bank.`;
+                                showOperationStatus('error', errorMsg);
+                                Swal.fire('Error', errorMsg, 'error');
+                            }
+                        },
+                        error: function (xhr) {
+                            setRowButtonLoading(`.btn-toggle[data-id="${id}"]`, false);
+                            let errorMsg = `An error occurred while trying to ${action} the bank.`;
+                            if (xhr.status === 0) errorMsg = 'Network error. Check your connection.';
+                            showOperationStatus('error', errorMsg);
+                            Swal.fire('Error', errorMsg, 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function deleteBank(id, bankName) {
+            Swal.fire({
+                title: 'Delete Bank?',
+                text: `Are you sure you want to delete bank '${bankName}'? This action cannot be undone.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Delete',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#dc3545'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    setRowButtonLoading(`.btn-delete[data-id="${id}"]`, true);
+                    showOperationStatus('loading', `Deleting bank "${bankName}"...`);
+
+                    $.ajax({
+                        url: '@Url.Action("Delete", "Bank")',
+                        type: 'POST',
+                        data: { id: id },
+                        headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                        success: function (response) {
+                            setRowButtonLoading(`.btn-delete[data-id="${id}"]`, false);
+                            if (response.success) {
+                                const msg = `Bank "${bankName}" deleted successfully.`;
+                                showOperationStatus('success', msg);
+                                showToast('success', msg);
+                                setTimeout(() => location.reload(), 1200);
+                            } else {
+                                const errorMsg = response.message || 'Failed to delete bank.';
+                                showOperationStatus('error', errorMsg);
+                                Swal.fire('Error', errorMsg, 'error');
+                            }
+                        },
+                        error: function (xhr) {
+                            setRowButtonLoading(`.btn-delete[data-id="${id}"]`, false);
+                            let errorMsg = 'An error occurred while deleting the bank.';
+                            if (xhr.status === 0) errorMsg = 'Network error. Check your connection.';
+                            showOperationStatus('error', errorMsg);
+                            Swal.fire('Error', errorMsg, 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function showToast(type, message) {
+            const bgClass = type === 'success' ? 'success'
+                          : type === 'info' ? 'info'
+                          : type === 'warning' ? 'warning text-dark'
+                          : 'danger';
+            const iconClass = type === 'success' ? 'check-circle'
+                            : type === 'info' ? 'info-circle'
+                            : type === 'warning' ? 'exclamation-circle'
+                            : 'exclamation-triangle';
+
+            const toastHtml = `
+                <div class="toast align-items-center text-white bg-${bgClass} border-0 position-fixed bottom-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true" style="z-index: 9999;">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi bi-${iconClass} me-2"></i>
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close ${type === 'warning' ? '' : 'btn-close-white'} me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+
+            $('body').append(toastHtml);
+            const toast = $('.toast').last();
+            const bsToast = new bootstrap.Toast(toast[0], { delay: 4000 });
+            bsToast.show();
+            toast.on('hidden.bs.toast', function () { $(this).remove(); });
+        }
+    </script>
+}

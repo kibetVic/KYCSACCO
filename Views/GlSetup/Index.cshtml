@@ -1,0 +1,702 @@
+﻿@model KYCSACCO.Models.GlSetup
+@{
+    ViewData["Title"] = "Account Setup";
+    var companies = ViewBag.Companies as List<KYCSACCO.Services.KycCompanyLookupDTO>
+                    ?? new List<KYCSACCO.Services.KycCompanyLookupDTO>();
+    var selectedCompanyCode = ViewBag.SelectedCompanyCode as string;
+}
+
+<h3 class="text-warning mb-3">Account Setup</h3>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<form asp-action="Save" method="post" id="glSetupForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="GlId" id="GlId" />
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <strong>Account Details</strong>
+        </div>
+        <div class="card-body">
+            <div class="row">
+
+                <!-- ============================================================ -->
+                <!-- COMPANY SELECTOR — determines which SACCO this account belongs -->
+                <!-- ============================================================ -->
+                <div class="col-md-4 mb-3">
+                    <label asp-for="CompanyCode" class="form-label fw-bold required">Company</label>
+                    <select asp-for="CompanyCode" id="CompanyCode" class="form-select" required>
+                        <option value="">-- Select Company --</option>
+                        @foreach (var c in companies)
+                        {
+                            <option value="@c.CompanyCode">@c.DisplayText</option>
+                        }
+                    </select>
+                    <small class="text-muted">Only companies with a KYC code are listed</small>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="AccNo" class="form-label fw-bold required">Account Number</label>
+                    <input asp-for="AccNo" id="AccNo" class="form-control" required maxlength="50"
+                           readonly="@(Model?.GlId > 0 ? "readonly" : null)"
+                           style="@(Model?.GlId > 0 ? "background-color:#f5f5f5;" : "")" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Glaccname" class="form-label fw-bold required">Account Name</label>
+                    <input asp-for="Glaccname" id="Glaccname" class="form-control" required maxlength="50" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Type" class="form-label fw-bold required">Account Type</label>
+                    <select asp-for="Type" id="accountType" class="form-select" required>
+                        <option value="">-- Select Account Type --</option>
+                        @if (ViewBag.AccountTypes != null)
+                        {
+                            foreach (var type in ViewBag.AccountTypes)
+                            {
+                                <option value="@type.Type">@type.Type</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="GlAccMainGroup" class="form-label fw-bold required">Account Group</label>
+                    <select asp-for="GlAccMainGroup" id="accountGroup" class="form-select" required>
+                        <option value="">-- Select Account Group --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Normalbal" class="form-label fw-bold">Normal Balance</label>
+                    <input asp-for="Normalbal" id="normalBalance" class="form-control" readonly />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="SubType" class="form-label fw-bold">A/C Sub Group</label>
+                    <select asp-for="SubType" id="SubType" class="form-select">
+                        <option value="">-- Select Sub Group --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Curr" class="form-label fw-bold">Currency</label>
+                    <select asp-for="Curr" id="Curr" class="form-select">
+                        <option value="">-- Select Currency --</option>
+                        @if (ViewBag.Currencies != null)
+                        {
+                            foreach (var currency in ViewBag.Currencies)
+                            {
+                                <option value="@currency.Code">@currency.Code - @currency.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="TransDate" class="form-label fw-bold">Balance As At</label>
+                    <input asp-for="TransDate" id="TransDate" type="date" class="form-control"
+                           value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="AccCategory" class="form-label fw-bold">A/C Category</label>
+                    <select asp-for="AccCategory" id="AccCategory" class="form-select">
+                        <option value="">-- Select Category --</option>
+                        @if (ViewBag.AccountCategories != null)
+                        {
+                            foreach (var cat in ViewBag.AccountCategories)
+                            {
+                                <option value="@cat.Name">@cat.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="OpeningBal" class="form-label fw-bold">Opening Balance</label>
+                    <input asp-for="OpeningBal" id="OpeningBal" class="form-control"
+                           type="number" step="0.01" placeholder="0.00" />
+                </div>
+
+                <div class="col-md-4 mb-3 d-flex align-items-end">
+                    <div class="form-check me-4">
+                        <input asp-for="IsSuspense" id="IsSuspense" class="form-check-input" type="checkbox" />
+                        <label asp-for="IsSuspense" class="form-check-label fw-bold">Is Suspense A/C</label>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="IsREarning" id="IsREarning" class="form-check-input" type="checkbox" />
+                        <label asp-for="IsREarning" class="form-check-label fw-bold">Is Retained Earnings A/C</label>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-center gap-2 mb-4">
+        <button type="button" id="btnSave" class="btn btn-success btn-modern">
+            Save
+        </button>
+        <button type="button" id="btnUpdate" class="btn btn-warning btn-modern d-none">
+            Update
+        </button>
+        <button type="button" id="btnDelete" class="btn btn-danger btn-modern d-none">
+            Delete
+        </button>
+        <button type="button" id="btnClear" class="btn btn-secondary btn-modern">
+            Clear
+        </button>
+    </div>
+</form>
+
+<hr />
+
+<!-- ============================================================ -->
+<!-- CHART OF ACCOUNTS + SEARCH                                    -->
+<!-- ============================================================ -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h4 class="mb-0">Chart of Accounts</h4>
+
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <div class="input-group" style="width: 420px;">
+            <span class="input-group-text bg-white">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text"
+                   id="accountSearch"
+                   class="form-control"
+                   placeholder="Search anything — Acc No, Name, Type, Group, Currency, Company…"
+                   autocomplete="off" />
+            <button type="button" class="btn btn-outline-secondary" id="btnClearSearch" title="Clear search">
+                ✕
+            </button>
+        </div>
+        <span class="badge bg-secondary" id="searchCount">
+            Showing all
+        </span>
+    </div>
+</div>
+
+<div class="table-scroll-wrapper">
+    <table class="table table-hover table-bordered table-sm align-middle mb-0" id="accountsTable">
+        <thead class="table-dark sticky-header">
+            <tr>
+                <th style="width:90px;">Actions</th>
+                <th>Account No</th>
+                <th>Account Name</th>
+                <th>Account Type</th>
+                <th>Account Group</th>
+                <th style="width:90px;">Normal</th>
+                <th>Category</th>
+                <th>Currency</th>
+                <th>Company Code</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (ViewBag.Accounts != null && ((IEnumerable<dynamic>)ViewBag.Accounts).Any())
+            {
+                foreach (var account in ViewBag.Accounts)
+                {
+                    <tr class="account-row"
+                        data-glid="@account.GlId"
+                        data-accno="@account.AccNo"
+                        data-glaccname="@account.Glaccname"
+                        data-type="@account.Type"
+                        data-group="@account.GlAccMainGroup"
+                        data-normalbal="@account.Normalbal"
+                        data-subtype="@account.SubType"
+                        data-curr="@account.Curr"
+                        data-acccategory="@account.AccCategory"
+                        data-companycode="@account.CompanyCode"
+                        data-openingbal="@(account.OpeningBal ?? 0)"
+                        data-transdate="@(account.TransDate != null ? ((DateTime)account.TransDate).ToString("yyyy-MM-dd") : "")"
+                        data-issuspense="@(account.IsSuspense ?? false ? "true" : "false")"
+                        data-isrearning="@(account.IsREarning ?? false ? "true" : "false")">
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-select-account">
+                                Select
+                            </button>
+                        </td>
+                        <td>@account.AccNo</td>
+                        <td>@account.Glaccname</td>
+                        <td>@account.Type</td>
+                        <td>@account.GlAccMainGroup</td>
+                        <td class="text-center fw-bold"
+                            style="color:@(account.Normalbal == "DR" ? "#28a745" : "#dc3545")">
+                            @account.Normalbal
+                        </td>
+                        <td>@account.AccCategory</td>
+                        <td>@account.Curr</td>
+                        <td>@account.CompanyCode</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="9" class="text-center py-4">
+                        <em>No accounts found. Please add your first account.</em>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- No results row (hidden until search yields nothing) -->
+<div id="noResults" class="text-center py-4 text-muted d-none">
+    <em>No accounts match your search.</em>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            // ============================================================
+            // BUTTON SPINNER HELPERS
+            // ============================================================
+            function setButtonLoading($btn, text) {
+                if ($btn.data('originalHtml') === undefined) {
+                    $btn.data('originalHtml', $btn.html());
+                }
+                $btn.prop('disabled', true);
+                $btn.html(
+                    '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' +
+                    (text || 'Loading...')
+                );
+            }
+
+            function clearButtonLoading($btn) {
+                var original = $btn.data('originalHtml');
+                if (original !== undefined) { $btn.html(original); }
+                $btn.prop('disabled', false);
+            }
+
+            // ============================================================
+            // BUTTON VISIBILITY
+            // ============================================================
+            function setEditMode(isEdit) {
+                if (isEdit) {
+                    $('#btnSave').addClass('d-none');
+                    $('#btnUpdate').removeClass('d-none');
+                    $('#btnDelete').removeClass('d-none');
+                    $('#AccNo').prop('readonly', true).css('background-color', '#f5f5f5');
+                } else {
+                    $('#btnSave').removeClass('d-none');
+                    $('#btnUpdate').addClass('d-none');
+                    $('#btnDelete').addClass('d-none');
+                    $('#AccNo').prop('readonly', false).css('background-color', '');
+                }
+            }
+
+            // ============================================================
+            // LOAD GROUPS BY TYPE (Promise)
+            // ============================================================
+            function loadGroupsByType(accountType) {
+                return new Promise(function (resolve, reject) {
+                    var groupDropdown = $('#accountGroup');
+                    groupDropdown.empty().append('<option value="">-- Select Account Group --</option>');
+                    if (!accountType) return resolve();
+
+                    $.getJSON('/GlSetup/GetGroupsByType', { accountType: accountType })
+                        .done(function (data) {
+                            $.each(data, function (i, group) {
+                                groupDropdown.append(
+                                    $('<option></option>')
+                                        .attr('value', group.name)
+                                        .text(group.name)
+                                        .data('normalbalance', group.normalBalance)
+                                );
+                            });
+                            resolve();
+                        })
+                        .fail(function (err) { reject(err); });
+                });
+            }
+
+            // ============================================================
+            // LOAD SUB CATEGORIES BY GROUP (Promise)
+            // ============================================================
+            function loadSubCategoriesByGroup(groupName) {
+                return new Promise(function (resolve, reject) {
+                    var subDropdown = $('#SubType');
+                    subDropdown.empty().append('<option value="">-- Select Sub Group --</option>');
+                    if (!groupName) return resolve();
+
+                    $.ajax({
+                        url: '/GlSetup/GetSubCategoriesByGroup',
+                        type: 'GET',
+                        data: { groupName: groupName }
+                    })
+                    .done(function (data) {
+                        $.each(data, function (i, item) {
+                            subDropdown.append(`<option value="${item.name}">${item.name}</option>`);
+                        });
+                        resolve();
+                    })
+                    .fail(function (err) { reject(err); });
+                });
+            }
+
+            // ============================================================
+            // NORMAL BALANCE RULES
+            // ============================================================
+            function applyNormalBalanceRules(groupName, valueToSet) {
+                var field = $('#normalBalance');
+                if (groupName === 'Capital Reserved') {
+                    field.prop('readonly', false);
+                    field.attr('placeholder', 'Enter DR or CR manually');
+                    field.css({ 'background-color': '#fff8e1', 'border': '2px solid #ff9800' });
+                    field.val(valueToSet || '');
+                } else if (groupName) {
+                    var auto = $('#accountGroup option:selected').data('normalbalance') || '';
+                    field.prop('readonly', true);
+                    field.attr('placeholder', '');
+                    field.css({ 'background-color': '#f5f5f5', 'border': '1px solid #ccc' });
+                    field.val(auto);
+                } else {
+                    field.prop('readonly', false);
+                    field.attr('placeholder', '');
+                    field.css({ 'background-color': '', 'border': '1px solid #ccc' });
+                    field.val(valueToSet || '');
+                }
+            }
+
+            // ============================================================
+            // CASCADES
+            // ============================================================
+            $('#accountType').on('change', async function () {
+                await loadGroupsByType($(this).val());
+                applyNormalBalanceRules('', '');
+                $('#SubType').empty().append('<option value="">-- Select Sub Group --</option>');
+            });
+
+            $('#accountGroup').on('change', async function () {
+                var groupName = $(this).val();
+                applyNormalBalanceRules(groupName, null);
+                await loadSubCategoriesByGroup(groupName);
+            });
+
+            // ============================================================
+            // SEARCH
+            // ============================================================
+            function applySearch() {
+                var term = ($('#accountSearch').val() || '').toString().toLowerCase().trim();
+                var $rows = $('#accountsTable tbody tr.account-row');
+                var total = $rows.length;
+                var visible = 0;
+
+                if (!term) {
+                    $rows.show();
+                    visible = total;
+                } else {
+                    $rows.each(function () {
+                        var $row = $(this);
+                        var haystack = $row.text().toLowerCase();
+                        var attrs = [
+                            $row.data('accno'), $row.data('glaccname'), $row.data('type'),
+                            $row.data('group'), $row.data('normalbal'), $row.data('subtype'),
+                            $row.data('curr'), $row.data('acccategory'), $row.data('companycode')
+                        ].join(' ').toLowerCase();
+
+                        if (haystack.indexOf(term) !== -1 || attrs.indexOf(term) !== -1) {
+                            $row.show();
+                            visible++;
+                        } else {
+                            $row.hide();
+                        }
+                    });
+                }
+
+                if (term) {
+                    $('#searchCount').text('Showing ' + visible + ' of ' + total);
+                } else {
+                    $('#searchCount').text('Showing all (' + total + ')');
+                }
+
+                if (visible === 0 && total > 0) {
+                    $('#noResults').removeClass('d-none');
+                    $('#accountsTable').addClass('d-none');
+                } else {
+                    $('#noResults').addClass('d-none');
+                    $('#accountsTable').removeClass('d-none');
+                }
+            }
+
+            var searchTimer = null;
+            $('#accountSearch').on('input', function () {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(applySearch, 120);
+            });
+
+            $('#accountSearch').on('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    clearTimeout(searchTimer);
+                    applySearch();
+                }
+                if (e.key === 'Escape') {
+                    $(this).val('');
+                    applySearch();
+                }
+            });
+
+            $('#btnClearSearch').on('click', function () {
+                $('#accountSearch').val('').focus();
+                applySearch();
+            });
+
+            applySearch();
+
+            // ============================================================
+            // SELECT ACCOUNT — populate the form and set edit mode
+            // ============================================================
+            $(document).on('click', '.btn-select-account', async function () {
+                var $btn = $(this);
+                var $row = $btn.closest('tr');
+
+                var data = {
+                    GlId:        $row.data('glid'),
+                    AccNo:       $row.data('accno')       || '',
+                    Glaccname:   $row.data('glaccname')   || '',
+                    Type:        $row.data('type')        || '',
+                    Group:       $row.data('group')       || '',
+                    Normalbal:   $row.data('normalbal')   || '',
+                    SubType:     $row.data('subtype')     || '',
+                    Curr:        $row.data('curr')        || '',
+                    AccCategory: $row.data('acccategory') || '',
+                    CompanyCode: $row.data('companycode') || '',
+                    OpeningBal:  $row.data('openingbal')  || 0,
+                    TransDate:   $row.data('transdate')   || '',
+                    IsSuspense:  $row.data('issuspense')  === true || $row.data('issuspense')  === 'true',
+                    IsREarning:  $row.data('isrearning')  === true || $row.data('isrearning')  === 'true'
+                };
+
+                setButtonLoading($btn, 'Loading...');
+
+                try {
+                    // Company first so the row belongs to the correct company
+                    $('#CompanyCode').val(data.CompanyCode);
+
+                    $('#GlId').val(data.GlId);
+                    $('#AccNo').val(data.AccNo);
+                    $('#Glaccname').val(data.Glaccname);
+                    $('#Curr').val(data.Curr);
+                    $('#AccCategory').val(data.AccCategory);
+                    $('#OpeningBal').val(data.OpeningBal);
+                    $('#IsSuspense').prop('checked', data.IsSuspense);
+                    $('#IsREarning').prop('checked', data.IsREarning);
+
+                    if (data.TransDate) {
+                        $('#TransDate').val(data.TransDate.substring(0, 10));
+                    }
+
+                    $('#accountType').val(data.Type);
+                    await loadGroupsByType(data.Type);
+
+                    $('#accountGroup').val(data.Group);
+                    await loadSubCategoriesByGroup(data.Group);
+
+                    if (data.SubType) {
+                        var exists = $('#SubType option[value="' + data.SubType + '"]').length > 0;
+                        if (!exists) {
+                            $('#SubType').append(
+                                '<option value="' + data.SubType + '">' + data.SubType + '</option>'
+                            );
+                        }
+                        $('#SubType').val(data.SubType);
+                    }
+
+                    applyNormalBalanceRules(data.Group, data.Normalbal);
+                    setEditMode(true);
+
+                    $('html, body').animate({
+                        scrollTop: $('#glSetupForm').offset().top - 20
+                    }, 300);
+                } catch (err) {
+                    console.error('Error loading account:', err);
+                    alert('Failed to load account details. Please try again.');
+                } finally {
+                    clearButtonLoading($btn);
+                }
+            });
+
+            // ============================================================
+            // VALIDATION
+            // ============================================================
+            function validateForm() {
+                var company  = $('#CompanyCode').val();
+                var accNo    = $('#AccNo').val();
+                var accName  = $('#Glaccname').val();
+                var accType  = $('#accountType').val();
+                var accGroup = $('#accountGroup').val();
+                var normal   = $('#normalBalance').val();
+
+                if (!company)                    { alert('Please select a Company.'); return false; }
+                if (!accNo || !accNo.trim())     { alert('Account Number is required.'); return false; }
+                if (!accName || !accName.trim()) { alert('Account Name is required.'); return false; }
+                if (!accType)                    { alert('Please select an Account Type.'); return false; }
+                if (!accGroup)                   { alert('Please select an Account Group.'); return false; }
+
+                if (accGroup === 'Capital Reserved') {
+                    if (!normal || normal.trim() === '') {
+                        alert('Please enter Normal Balance (DR or CR) for Capital Reserved accounts.');
+                        return false;
+                    }
+                    var upper = normal.trim().toUpperCase();
+                    if (upper !== 'DR' && upper !== 'CR') {
+                        alert('Normal Balance must be either DR or CR.');
+                        return false;
+                    }
+                    $('#normalBalance').val(upper);
+                }
+                return true;
+            }
+
+            // ============================================================
+            // SAVE
+            // ============================================================
+            $('#btnSave').on('click', function () {
+                if (!validateForm()) return;
+                $('#GlId').val(0);
+                var $btn = $(this);
+                setButtonLoading($btn, 'Saving...');
+                $('#glSetupForm').attr('action', '/GlSetup/Save').trigger('submit');
+            });
+
+            // ============================================================
+            // UPDATE
+            // ============================================================
+            $('#btnUpdate').on('click', function () {
+                var glId = $('#GlId').val();
+                if (!glId || glId === '0' || glId === '') {
+                    alert('Please select an account to update.');
+                    return;
+                }
+                if (!validateForm()) return;
+
+                var $btn = $(this);
+                setButtonLoading($btn, 'Updating...');
+                $('#glSetupForm').attr('action', '/GlSetup/Update').trigger('submit');
+            });
+
+            // ============================================================
+            // DELETE
+            // ============================================================
+            $('#btnDelete').on('click', function () {
+                var glId = $('#GlId').val();
+                if (!glId || glId === '0' || glId === '') {
+                    alert('Please select an account to delete.');
+                    return;
+                }
+                if (!confirm('Are you sure you want to delete this account? This action cannot be undone.')) {
+                    return;
+                }
+
+                var $btn = $(this);
+                setButtonLoading($btn, 'Deleting...');
+
+                var token = $('input[name="__RequestVerificationToken"]').first().val();
+                var form = $('<form method="post" action="/GlSetup/Delete"></form>');
+                form.append($('<input type="hidden" name="glId" value="' + glId + '"/>'));
+                form.append($('<input type="hidden" name="__RequestVerificationToken" value="' + token + '"/>'));
+                $('body').append(form);
+                form.submit();
+            });
+
+            // ============================================================
+            // CLEAR
+            // ============================================================
+            $('#btnClear').on('click', function () {
+                window.location.href = '@Url.Action("Index")';
+            });
+
+            // Auto-hide alerts
+            setTimeout(function () { $('.alert').fadeOut('slow'); }, 5000);
+        });
+    </script>
+}
+
+<style>
+    label.required::after {
+        content: " *";
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .table-scroll-wrapper {
+        max-height: 450px;
+        overflow-y: auto;
+        overflow-x: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+        .table-scroll-wrapper thead.sticky-header th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background-color: #212529 !important;
+            color: #fff;
+        }
+
+        .table-scroll-wrapper table {
+            margin-bottom: 0;
+        }
+
+    .btn-modern {
+        padding: 10px 24px;
+        border-radius: 5px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        transition: all 0.25s ease;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+        }
+
+        .btn-modern:disabled {
+            cursor: not-allowed;
+            opacity: 0.85;
+            transform: none;
+        }
+
+    .form-select, .form-control {
+        border-radius: 6px;
+    }
+
+    #accountSearch {
+        border-left: 0;
+    }
+
+        #accountSearch:focus {
+            box-shadow: none;
+            border-color: #86b7fe;
+        }
+
+    .input-group:focus-within .input-group-text {
+        border-color: #86b7fe;
+        background-color: #e7f1ff;
+    }
+</style>
